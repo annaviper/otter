@@ -16,7 +16,7 @@ with open('style.css') as f:
     st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
 
 
-@st.experimental_memo
+# @st.experimental_memo
 def get_data_from_excel(path: str):
     return pd.read_excel(path)
 
@@ -73,9 +73,8 @@ htmlstr = f"""<p style='background-color: rgb(154,216,225);
 st.markdown(lnk + htmlstr, unsafe_allow_html=True)
 
 st.markdown("""
-### Active users metrics
-Users who have logged in
-""")
+### Active users metrics""")
+st.caption('Users who have logged in')
 col1, col2, col3, col4, col5, col6 = st.columns(6)
 
 # Daily
@@ -121,6 +120,23 @@ fig_growth.update_layout(plot_bgcolor="rgba(0,0,0,0)", xaxis=(dict(showgrid=Fals
 fig_growth.update_yaxes(rangemode="tozero")
 st.plotly_chart(fig_growth, use_container_width=True)
 
+#---------------------------- ROW B
+col1, col2 = st.columns(2)
+with col1:
+    st.markdown("""### Logged-in users by CSM status""")
+    logged_in = df_selection.groupby(['CSM Status Stage', 'has_logged_in']).count().sort_values(['Account ID', 'CSM Status Stage'], ascending=False).reset_index()
+    fig = px.bar(logged_in, x="CSM Status Stage", y='Account ID', color="has_logged_in", barmode='group')
+    st.plotly_chart(fig, use_container_width=True)
+with col2:
+    st.markdown("""### Users by product""")
+    df_selection = df_selection[df_selection['Region'] != 'Unknown']
+    gb = df_selection.groupby(['Region', 'Highest Product']).nunique().reset_index()
+    fig_growth = px.bar(gb, x='Region', y='Account ID', color='Highest Product', barmode='group')
+    fig_growth.update_layout(plot_bgcolor="rgba(0,0,0,0)", xaxis=(dict(showgrid=False)))
+    fig_growth.update_yaxes(rangemode="tozero")
+
+    st.plotly_chart(fig_growth, use_container_width=True)
+
 # CHURN ANALYTICS
 c1, c2, c3 = st.columns(3)
 with c1:
@@ -154,23 +170,6 @@ with c3:
         'Account ID'].reset_index()
     fig_churn_by_partners = px.bar(churn_by_partners, x='# delivery partners', y='Account ID')
     st.plotly_chart(fig_churn_by_partners, use_container_width=True)
-
-#---------------------------- ROW C
-col1, col2 = st.columns(2)
-with col1:
-    st.markdown("""### Logged-in users by CSM status""")
-    logged_in = df_selection.groupby(['CSM Status Stage', 'has_logged_in']).count().sort_values(['Account ID', 'CSM Status Stage'], ascending=False).reset_index()
-    fig = px.bar(logged_in, x="CSM Status Stage", y='Account ID', color="has_logged_in", barmode='group')
-    st.plotly_chart(fig, use_container_width=True)
-with col2:
-    st.markdown('### Users by product')
-    df_selection = df_selection[df_selection['Region'] != 'Unknown']
-    gb = df_selection.groupby(['Region', 'Highest Product']).nunique().reset_index()
-    fig_growth = px.bar(gb, x='Region', y='Account ID', color='Highest Product', barmode='group')
-    fig_growth.update_layout(plot_bgcolor="rgba(0,0,0,0)", xaxis=(dict(showgrid=False)))
-    fig_growth.update_yaxes(rangemode="tozero")
-
-    st.plotly_chart(fig_growth, use_container_width=True)
 
 st.markdown('''
 ---
