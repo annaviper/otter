@@ -1,4 +1,5 @@
 pandas
+plotly==3.10.0
 plotly.express
 streamlit
 plotly.subplots
