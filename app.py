@@ -9,14 +9,14 @@ st.set_page_config(
     page_title="Otter: Onboarding dashboard",
     page_icon=":bar_chart:",
     layout="wide",
-    initial_sidebar_state='collapsed'
+    initial_sidebar_state='expanded'
 )
 
 with open('style.css') as f:
     st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
 
 
-# @st.experimental_memo
+@st.experimental_memo
 def get_data_from_excel(path: str):
     return pd.read_excel(path)
 
@@ -26,17 +26,12 @@ df = get_data_from_excel('data/data_clean.xlsx')
 # SIDEBAR
 st.sidebar.header("Filters")
 
-highest_product = st.sidebar.multiselect(
-    "Select the product level:",
-    options=df['Highest Product'].unique(),
-    default=df['Highest Product'].unique()
-)
+highest_product_unique = df['Highest Product'].unique()
+highest_product = st.sidebar.multiselect("Select the product level:", options=highest_product_unique, default=highest_product_unique)
 
+csm_unique = df[df['CSM Status Stage'].notna()]['CSM Status Stage'].unique()
 csm_status = st.sidebar.multiselect(
-    "Select the CSM Status:",
-    options=df['CSM Status Stage'].unique(),
-    default=df['CSM Status Stage'].unique()
-)
+    "Select the CSM status:", options=csm_unique, default=csm_unique)
 
 region = st.sidebar.multiselect(
     "Select the region:",
@@ -44,14 +39,7 @@ region = st.sidebar.multiselect(
     default=df.Region.unique()
 )
 
-df_selection = df.query(
-    "`CSM Status Stage` == @csm_status & Region == @region & `Highest Product` == @highest_product"
-)
-
-st.sidebar.markdown('''
----
-Created with ❤️ by Anna.
-''')
+df_selection = df.query("`CSM Status Stage` == @csm_status & Region == @region & `Highest Product` == @highest_product")
 
 # MAIN PAGE
 fontsize = 50
@@ -116,8 +104,38 @@ with col1:
     col6.metric("Stickiness (DAU/MAU)", f"{round(stickiness, 2)}%")
 
 fig_growth = px.line(daily_users, x='date_usage', y='Account ID', title="<b>Daily Active Users</b>")
-fig_growth.update_layout(plot_bgcolor="rgba(0,0,0,0)", xaxis=(dict(showgrid=False)))
 fig_growth.update_yaxes(rangemode="tozero")
+fig_growth.update_layout(
+    xaxis=dict(
+        rangeselector=dict(
+            buttons=list([
+                dict(count=1,
+                     label="1m",
+                     step="month",
+                     stepmode="backward"),
+                dict(count=3,
+                     label="3m",
+                     step="month",
+                     stepmode="backward"),
+                dict(count=6,
+                     label="6m",
+                     step="month",
+                     stepmode="backward"),
+                dict(count=1,
+                     label="YTD",
+                     step="year",
+                     stepmode="todate"),
+                dict(count=1,
+                     label="1y",
+                     step="year",
+                     stepmode="backward"),
+                dict(step="all")
+            ])
+        ),
+        rangeslider=dict(visible=False),
+        type="date"
+    )
+)
 st.plotly_chart(fig_growth, use_container_width=True)
 
 #---------------------------- ROW B
